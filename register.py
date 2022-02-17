@@ -12,6 +12,8 @@ class Register:
         assert len(data) == len(self.data)
         self.data = data
     
+    # Gives byte-string on True,
+    # else list of booleans
     def register_out(self, s=False):
         if not s:
             return self.data

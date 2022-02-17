@@ -8,10 +8,7 @@ def parse_bits(string):
     return bits
 
 def binary_to_decimal(binary):
-        decimal = 0 
-        for digit in binary: 
-            decimal = decimal*2 + int(digit) 
-        return decimal 
+    return int(binary,2)
 
 def array_to_decimal(address):
     out = "".join("1" if i else "0" for i in address)
