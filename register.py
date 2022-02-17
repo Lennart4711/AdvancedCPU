@@ -10,6 +10,7 @@ class Register:
 
     def register_in(self, data):
         assert len(data) == len(self.data)
+        assert type(data)==list
         self.data = data
     
     # Gives byte-string on True,
