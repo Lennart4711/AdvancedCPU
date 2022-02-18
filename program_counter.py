@@ -2,7 +2,8 @@ from register import Register
 from adder import Adder
 
 class ProgrammCounter:
-    def __init__(self, size):
+    def __init__(self, size, bus):
+        self.bus = bus
         self.size = size
         self.counter = Register(self.size)
         self.adder = Adder(self.size)
@@ -11,7 +12,7 @@ class ProgrammCounter:
         self.counter.register_in(address)
     
     def counter_out(self):
-        return self.counter.register_out()
+        self.bus.bus_in(self.counter.register_out())
 
     def count_enable(self):
         out = self.adder.adder_out(self.counter.register_out(), [False]*8,True)

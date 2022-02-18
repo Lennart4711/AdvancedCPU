@@ -1,7 +1,8 @@
 from adder import Adder
 
 class Alu:
-    def __init__(self, size):
+    def __init__(self, size, bus):
+        self.bus = bus
         self.size = size
         self.carry = False
         self.adder = Adder(self.size)
