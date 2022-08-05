@@ -11,6 +11,7 @@ def int_to_bin(n: int) -> str:
     else:
         return bin(n)[2:].zfill(s)
 
+
 def bin_to_int(n: str) -> int:
     # Convert binary string to integer
     return int(n, 2)
@@ -20,24 +21,25 @@ class Bus:
     def __init__(self, size):
         self.size = size
         self.value = "0" * size
-        
+
     def set_value(self, value):
-        assert len(value) == self.size 
+        assert len(value) == self.size
         assert type(value) == str
         self.value = value
+
     def get_value(self):
         return self.value
-        
+
 
 class Register:
     def __init__(self, size, bus):
-        self.value = "0"*size
+        self.value = "0" * size
         self.size = size
         self.bus = bus
-        
+
     def register_out(self):
         self.bus.set_value(self.value)
-    
+
     def register_in(self):
         self.value = self.bus.get_value()
 
@@ -46,59 +48,62 @@ class MAR:
     def __init__(self, size, bus):
         self.size = size
         self.bus = bus
-        self.value = "0" * int(self.size/2)
-    
+        self.value = "0" * int(self.size / 2)
+
     def mar_in(self):
-        if len(self.bus.get_value()[int(self.size/2):]) == self.size:
+        if len(self.bus.get_value()[int(self.size / 2) :]) == self.size:
             ("mar in error")
-        self.value = self.bus.get_value()[int(self.size/2):]
-        
+        self.value = self.bus.get_value()[int(self.size / 2) :]
+
     def get_value(self):
         return self.value
-        
+
+
 class RAM:
     def __init__(self, size, bus):
         # memory addresss register
-        self.half = int(size/2)
+        self.half = int(size / 2)
         self.cells = [Register(size, bus) for _ in range((2**self.half))]
         self.bus = bus
-    
+
     def ram_in(self, mar: MAR):
         self.cells[bin_to_int(mar.get_value())].value = self.bus.get_value()
-        
+
     def ram_out(self, mar: MAR):
         self.cells[bin_to_int(mar.get_value())].register_out()
-        
-class ProgramCounter():
+
+
+class ProgramCounter:
     def __init__(self, size, bus):
-        self.value = "0" * int(size/2)
+        self.value = "0" * int(size / 2)
         self.size = size
         self.bus = bus
-    
+
     def counter_out(self):
         self.bus.set_value(int_to_bin(bin_to_int(self.value)))
-    
+
     def jump(self):
-        self.value = self.bus.get_value()[int(self.size/2):]
-        
+        self.value = self.bus.get_value()[int(self.size / 2) :]
+
     def increment(self):
-        if bin_to_int(self.value)+1 == 2**int(self.size/2):
-            self.value = "0" * int(self.size/2)
-            assert False, "Program counter overflow" # Remove later
+        if bin_to_int(self.value) + 1 == 2 ** int(self.size / 2):
+            self.value = "0" * int(self.size / 2)
+            assert False, "Program counter overflow"  # Remove later
         else:
             self.value = int_to_bin(bin_to_int(self.value) + 1)
-            
+
+
 class Flags:
     # value[0] = carry flag
     # value[1] = zero flag
     def __init__(self):
         self.carry = False
         self.zero = False
-    
+
     def set_carry(self, value):
         (f"set carry to {value}")
         self.carry = value
-    
+
     def set_zero(self, value):
         (f"set zero to {value}")
         self.zero = value
@@ -112,7 +117,7 @@ class ALU:
         self.b = b
         self.value = "0" * self.size
         self.flags = flags
-        
+
     def sum_out(self, subtract=False):
         # A 16 bit alu
         a = self.a.value
@@ -120,8 +125,8 @@ class ALU:
         # if subtract is true, make twos complement of b
         if subtract:
             # 1101 -> 0010 -> +1 -> 0011
-            b = ['0' if x == '1' else '1' for x in b]
-            b = ''.join(b)
+            b = ["0" if x == "1" else "1" for x in b]
+            b = "".join(b)
             b = int_to_bin(bin_to_int(b) + 1)
         # add a and b
         self.value = int_to_bin(bin_to_int(a) + bin_to_int(b))
@@ -138,12 +143,10 @@ class ALU:
             self.flags.set_zero(True)
         else:
             self.flags.set_zero(False)
-      
+
         self.bus.set_value(self.value)
-        
-        
-        
-        
+
+
 class CPU:
     def __init__(self):
         self.bus = Bus(s)
@@ -154,24 +157,24 @@ class CPU:
         self.program_counter = ProgramCounter(s, self.bus)
         self.instr_reg = Register(s, self.bus)
         self.flags = Flags()
-        self.alu = ALU(s, self.bus, self.a_reg, self.b_reg ,self.flags)
-        
+        self.alu = ALU(s, self.bus, self.a_reg, self.b_reg, self.flags)
+
     def loop(self):
         # Counter out, mar in
         self.program_counter.counter_out()
         self.mar.mar_in()
-        #(f"CO MI : {bin_to_int(self.bus.get_value())} ")
-        
+        # (f"CO MI : {bin_to_int(self.bus.get_value())} ")
+
         # Ram out, instr reg in
-        #("RO II")
+        # ("RO II")
         self.ram.ram_out(self.bus)
         self.instr_reg.register_in()
-        #("CE")
+        # ("CE")
         self.program_counter.increment()
-        
-        instruction = bin_to_int(self.instr_reg.value[:int(s/2)])
-        address = bin_to_int(self.instr_reg.value[int(s/2):])
-        # Decode and execute instruction        
+
+        instruction = bin_to_int(self.instr_reg.value[: int(s / 2)])
+        address = bin_to_int(self.instr_reg.value[int(s / 2) :])
+        # Decode and execute instruction
         if instruction == 0:
             # NOP
             pass
@@ -200,8 +203,8 @@ class CPU:
         elif instruction == 4:
             # STA
             self.bus.set_value(int_to_bin(address))
-            self.mar.mar_in()            
-            self.a_reg.register_out()          
+            self.mar.mar_in()
+            self.a_reg.register_out()
             self.ram.ram_in(self.mar)
         elif instruction == 5:
             # LDI
@@ -254,22 +257,18 @@ class CPU:
             print(self.a_reg.value, bin_to_int(self.a_reg.value))
         elif instruction == 255:
             # HALT
+            print("Excecution Time: ", time.time()-self.start)
             exit()
-            
-def value(n):
-    s = 8
-    if n < 0:
-        return bin(n + 2**s)[2:].zfill(s)
-    else:
-        return bin(n)[2:].zfill(s)
-        
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     cpu = CPU()
     for i in range(256):
         cpu.ram.cells[i].value = ram[i]
-    
-    
-    
+
+    import time
+
+    cpu.start = time.time()
     while True:
         cpu.loop()
-        #(cpu.a_reg.value)
+        # (cpu.a_reg.value)
