@@ -1,5 +1,5 @@
 from assembler import ram
-
+import keyboard
 s = 16
 
 
@@ -154,12 +154,14 @@ class CPU:
         self.ram = RAM(s, self.bus)
         self.a_reg = Register(s, self.bus)
         self.b_reg = Register(s, self.bus)
+        self.x_reg = Register(s, self.bus)
         self.program_counter = ProgramCounter(s, self.bus)
         self.instr_reg = Register(s, self.bus)
         self.flags = Flags()
         self.alu = ALU(s, self.bus, self.a_reg, self.b_reg, self.flags)
 
     def loop(self):
+        self.keys()
         # Counter out, mar in
         self.program_counter.counter_out()
         self.mar.mar_in()
@@ -247,18 +249,64 @@ class CPU:
             self.alu.sum_out(subtract=True)
             self.a_reg.register_in()
         elif instruction == 13:
-            # STI
+            # STX
             self.bus.set_value(int_to_bin(address))
+            self.mar.mar_in()
+            self.x_reg.register_out()
+            self.ram.ram_in(self.mar)
+        elif instruction == 14:
+            # LDX
+            self.bus.set_value(int_to_bin(address))
+            self.mar.mar_in()
+            self.ram.ram_out(self.mar)
+            self.x_reg.register_in()
+        elif instruction == 15:
+            # TXA
+            self.x_reg.register_out()
+            self.a_reg.register_in()
+        elif instruction == 16:
+            # TAX
+            self.a_reg.register_out()
+            self.x_reg.register_in()
+        elif instruction == 17:
+            # SAX store whats in a at address x
+            self.x_reg.register_out()
             self.mar.mar_in()
             self.a_reg.register_out()
             self.ram.ram_in(self.mar)
         elif instruction == 254:
             # OUT
-            print(self.a_reg.value, bin_to_int(self.a_reg.value))
+            result = []
+            time.sleep(0.1)
+            
+            for i in range(10):
+                print()
+                
+            for i in range(64):
+                result.append(bin_to_int(cpu.ram.cells[0x80 + i].value))
+                if len(result) % 8 == 0:
+                    print(result)
+                    result = []
+            self.clear_screen()
+            #print(self.a_reg.value, bin_to_int(self.a_reg.value))
+            print(time.time() - self.last_draw)
+            self.last_draw = time.time()
+            
         elif instruction == 255:
             # HALT
             print("Excecution Time: ", time.time()-self.start)
             exit()
+            
+
+    def clear_screen(self):
+        for i in range(64):
+            self.ram.cells[0x80 + i].value = int_to_bin(0)
+            
+    def keys(self):
+        self.ram.cells[0xc0].value = int_to_bin(keyboard.is_pressed('w'))
+        self.ram.cells[0xc1].value = int_to_bin(keyboard.is_pressed('a'))
+        self.ram.cells[0xc2].value = int_to_bin(keyboard.is_pressed('s'))
+        self.ram.cells[0xc3].value = int_to_bin(keyboard.is_pressed('d'))
 
 
 if __name__ == "__main__":
@@ -269,6 +317,15 @@ if __name__ == "__main__":
     import time
 
     cpu.start = time.time()
+    cpu.last_draw = time.time()
     while True:
+        # result = []
+        # for i in range(10):
+        #     print()
+        # for i in range(64):
+        #     result.append(bin_to_int(cpu.ram.cells[0x80 + i].value))
+        #     if len(result) % 8 == 0:
+        #         print(result)
+        #         result = []
         cpu.loop()
         # (cpu.a_reg.value)
